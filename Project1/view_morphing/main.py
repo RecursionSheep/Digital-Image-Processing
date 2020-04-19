@@ -1,5 +1,6 @@
 import cv2
 import numpy as np
+from morph import image_morph
 
 def rotation_matrix(u, theta):
 	c = np.cos(theta)
@@ -234,7 +235,29 @@ F, mask = cv2.findFundamentalMat(src_points, target_points)
 H0, H1 = prewarp(F)
 
 new_size = int(np.sqrt(np.power(src.shape[0], 2) + np.power(target.shape[1], 2)))
-prewarp_1 = cv2.warpPerspective(src, H0, (new_size, new_size))
-prewarp_2 = cv2.warpPerspective(target, H1, (new_size, new_size))
+prewarp_1 = cv2.warpPerspective(src, H0, (m, n), borderMode = cv2.BORDER_REPLICATE)
+prewarp_2 = cv2.warpPerspective(target, H1, (m, n), borderMode = cv2.BORDER_REPLICATE)
+'''for i in range(n):
+	for j in range(m):
+		if (prewarp_1[i, j, 0] == 0) and (prewarp_1[i, j, 1] <= 5e-3) and (prewarp_1[i, j, 2] <= 5e-3):
+			prewarp_1[i, j, :] = prewarp_1[0, 0, :]
+		if (prewarp_2[i, j, 0] <= 5e-3) and (prewarp_2[i, j, 1] <= 5e-3) and (prewarp_2[i, j, 2] <= 5e-3):
+			prewarp_2[i, j, :] = prewarp_2[0, 0, :]'''
 cv2.imwrite('prewarp1.png', (np.clip(prewarp_1, 0., 1.) * 255).astype(np.uint8))
 cv2.imwrite('prewarp2.png', (np.clip(prewarp_2, 0., 1.) * 255).astype(np.uint8))
+
+src_features = []
+target_features = []
+for i in range(point_num):
+	point = np.array([src_points[i, 0], src_points[i, 1], 1])
+	point = np.matmul(H0, point)
+	src_features.append([point[1] / point[2], point[0] / point[2]])
+	point = np.array([target_points[i, 0], target_points[i, 1], 1])
+	point = np.matmul(H1, point)
+	target_features.append([point[1] / point[2], point[0] / point[2]])
+output = image_morph(prewarp_1, prewarp_2, src_features, target_features)
+#cv2.imwrite('prewarp1.png', (np.clip(prewarp_1, 0., 1.) * 255).astype(np.uint8))
+cv2.imwrite('middle0.png', (np.clip(output[0], 0., 1.) * 255).astype(np.uint8))
+cv2.imwrite('middle1.png', (np.clip(output[1], 0., 1.) * 255).astype(np.uint8))
+cv2.imwrite('middle2.png', (np.clip(output[2], 0., 1.) * 255).astype(np.uint8))
+cv2.imwrite('middle3.png', (np.clip(output[3], 0., 1.) * 255).astype(np.uint8))
