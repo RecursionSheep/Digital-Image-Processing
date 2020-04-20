@@ -12,44 +12,6 @@ def rotation_matrix(u, theta):
 		[t * x * y, t * y * y + c, - s * x],
 		[- s * y, s * x, c]])
 
-def normalize(p):
-	x = p[:, 0]
-	y = p[:, 1]
-	x = x.reshape((-1, 1))
-	y = y.reshape((-1, 1))
-	num = len(x)
-	mean_x, mean_y = np.mean(x), np.mean(y)
-	shifted_x, shifted_y = x - mean_x, y - mean_y
-	scale = np.sqrt(2) / np.mean(np.sqrt(shifted_x ** 2 + shifted_y ** 2))
-	t = np.array([[scale, 0, - scale * mean_x], [0, scale, - scale * mean_y], [0, 0, 1]])
-	
-	ones = np.ones((num, 1))
-	p = np.concatenate((x, y, ones), axis = 1)
-	p = np.dot(t, p.T)
-	return p.T, t
-
-def fundamental_matrix(image1, image2, p1, p2):
-	p1, t1 = normalize(p1)
-	p2, t2 = normalize(p2)
-	x1, y1 = p2[:, 0], p2[:, 1]
-	x2, y2 = p1[:, 0], p1[:, 1]
-	num = len(x1)
-	o = np.ones((num, 1))
-	a = np.concatenate((x1 * x2, x1 * y2, x1, y1 * x2, y1 * y2, y1, x2, y2,
-		o[:, 0])).reshape((num, -1), order = 'F')
-	
-	U, D, V = np.linalg.svd(a)
-	smallest = V[8, :].T
-	F = smallest.reshape(3, 3)
-	
-	U, D, V = np.linalg.svd(F)
-	r = D[0]
-	s = D[1]
-	
-	F = np.dot(U, np.diag([r, s, 0])).dot(V)
-	F = t2.T.dot(F).dot(t1)
-	return F
-
 def prewarp(F):
 	eigvalue0, eigvector0 = np.linalg.eig(F)
 	eigvalue1, eigvector1 = np.linalg.eig(np.transpose(F))
@@ -59,19 +21,19 @@ def prewarp(F):
 
 	Fd0 = F.dot(d0)
 	d1 = np.array([-Fd0[1], Fd0[0], 0])
-	theta0 = np.arctan(e0[2]/(d0[1]*e0[0] - d0[0]*e0[1]))
-	theta1 = np.arctan(e1[2]/(d1[1]*e1[0] - d1[0]*e1[1]))
+	theta0 = np.arctan(e0[2] / (d0[1] * e0[0] - d0[0] * e0[1]))
+	theta1 = np.arctan(e1[2] / (d1[1] * e1[0] - d1[0] * e1[1]))
 	R_d0_theta0 = rotation_matrix(d0, theta0)
 	R_d1_theta1 = rotation_matrix(d1, theta1)
 
 	new_e0 = R_d0_theta0.dot(e0)
 	new_e1 = R_d1_theta1.dot(e1)
-	phi0 = -np.arctan(new_e0[1]/new_e0[0])
-	phi1 = -np.arctan(new_e1[1]/new_e1[0])
-	R_phi0 = np.array([[np.cos(phi0), -np.sin(phi0), 0],
+	phi0 = - np.arctan(new_e0[1] / new_e0[0])
+	phi1 = - np.arctan(new_e1[1] / new_e1[0])
+	R_phi0 = np.array([[np.cos(phi0), - np.sin(phi0), 0],
 		[np.sin(phi0), np.cos(phi0), 0],
 		[0, 0, 1]])
-	R_phi1 = np.array([[np.cos(phi1), -np.sin(phi1), 0],
+	R_phi1 = np.array([[np.cos(phi1), - np.sin(phi1), 0],
 		[np.sin(phi1), np.cos(phi1), 0],
 		[0, 0, 1]])
 	H0 = R_phi0.dot(R_d0_theta0)
@@ -230,7 +192,6 @@ target = target / 255.
 n, m = src.shape[0], src.shape[1]
 assert src.shape == target.shape
 
-F = fundamental_matrix(src, target, src_points, target_points)
 F, mask = cv2.findFundamentalMat(src_points, target_points)
 H0, H1 = prewarp(F)
 #print(H0)
