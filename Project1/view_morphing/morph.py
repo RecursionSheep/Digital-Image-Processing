@@ -3,7 +3,7 @@ import numpy as np
 from scipy.spatial import Delaunay
 import sys
 
-def image_morph(src, target, src_feature, target_feature):
+def image_morph(src, target, src_feature, target_feature, morph_rates):
 	point_num = len(src_feature)
 	assert len(src_feature) == len(target_feature)
 	
@@ -18,7 +18,6 @@ def image_morph(src, target, src_feature, target_feature):
 	delaunay = Delaunay(src_feature)
 	tri_num = delaunay.simplices.shape[0]
 	
-	morph_rates = [.2, .4, .6, .8]
 	morph_num = len(morph_rates)
 	output = []
 	for i in range(morph_num):

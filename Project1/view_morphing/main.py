@@ -233,16 +233,12 @@ assert src.shape == target.shape
 F = fundamental_matrix(src, target, src_points, target_points)
 F, mask = cv2.findFundamentalMat(src_points, target_points)
 H0, H1 = prewarp(F)
+#print(H0)
+#print(H1)
 
 new_size = int(np.sqrt(np.power(src.shape[0], 2) + np.power(target.shape[1], 2)))
 prewarp_1 = cv2.warpPerspective(src, H0, (m, n), borderMode = cv2.BORDER_REPLICATE)
 prewarp_2 = cv2.warpPerspective(target, H1, (m, n), borderMode = cv2.BORDER_REPLICATE)
-'''for i in range(n):
-	for j in range(m):
-		if (prewarp_1[i, j, 0] == 0) and (prewarp_1[i, j, 1] <= 5e-3) and (prewarp_1[i, j, 2] <= 5e-3):
-			prewarp_1[i, j, :] = prewarp_1[0, 0, :]
-		if (prewarp_2[i, j, 0] <= 5e-3) and (prewarp_2[i, j, 1] <= 5e-3) and (prewarp_2[i, j, 2] <= 5e-3):
-			prewarp_2[i, j, :] = prewarp_2[0, 0, :]'''
 cv2.imwrite('prewarp1.png', (np.clip(prewarp_1, 0., 1.) * 255).astype(np.uint8))
 cv2.imwrite('prewarp2.png', (np.clip(prewarp_2, 0., 1.) * 255).astype(np.uint8))
 
@@ -255,9 +251,34 @@ for i in range(point_num):
 	point = np.array([target_points[i, 0], target_points[i, 1], 1])
 	point = np.matmul(H1, point)
 	target_features.append([point[1] / point[2], point[0] / point[2]])
-output = image_morph(prewarp_1, prewarp_2, src_features, target_features)
-#cv2.imwrite('prewarp1.png', (np.clip(prewarp_1, 0., 1.) * 255).astype(np.uint8))
-cv2.imwrite('middle0.png', (np.clip(output[0], 0., 1.) * 255).astype(np.uint8))
-cv2.imwrite('middle1.png', (np.clip(output[1], 0., 1.) * 255).astype(np.uint8))
-cv2.imwrite('middle2.png', (np.clip(output[2], 0., 1.) * 255).astype(np.uint8))
-cv2.imwrite('middle3.png', (np.clip(output[3], 0., 1.) * 255).astype(np.uint8))
+morph_rates = [0, .1, .2, .3, .4, .5, .6, .7, .8, .9, 1.]
+output = image_morph(prewarp_1, prewarp_2, src_features, target_features, morph_rates)
+
+point0 = np.array([0, 0, 1])
+point0 = np.matmul(H0, point0)
+point1 = np.array([n - 1, 0, 1])
+point1 = np.matmul(H0, point1)
+point2 = np.array([0, m - 1, 1])
+point2 = np.matmul(H0, point2)
+point3 = np.array([n - 1, m - 1, 1])
+point3 = np.matmul(H0, point3)
+src_corners = np.array([[point0[1] / point0[2], point0[0] / point0[2]], [point1[1] / point1[2], point1[0] / point1[2]], [point2[1] / point2[2], point2[0] / point2[2]], [point3[1] / point3[2], point3[0] / point3[2]]])
+point0 = np.array([0, 0, 1])
+point0 = np.matmul(H1, point0)
+point1 = np.array([n - 1, 0, 1])
+point1 = np.matmul(H1, point1)
+point2 = np.array([0, m - 1, 1])
+point2 = np.matmul(H1, point2)
+point3 = np.array([n - 1, m - 1, 1])
+point3 = np.matmul(H1, point3)
+target_corners = np.array([[point0[1] / point0[2], point0[0] / point0[2]], [point1[1] / point1[2], point1[0] / point1[2]], [point2[1] / point2[2], point2[0] / point2[2]], [point3[1] / point3[2], point3[0] / point3[2]]])
+orig_corners = np.array([[0, 0], [0, n - 1], [m - 1, 0], [m - 1, n - 1]])
+
+cnt = 0
+for rate in morph_rates:
+	corners = src_corners * (1 - rate) + target_corners * rate
+	Hs, s = cv2.findHomography(orig_corners, corners)
+	#Hs = np.linalg.inv(H0) * (1 - rate) + np.linalg.inv(H1) * rate
+	postwarp = cv2.warpPerspective(output[cnt], Hs, (m, n), borderMode = cv2.BORDER_REPLICATE)
+	cnt += 1
+	cv2.imwrite('morphed%d.png' % cnt, (np.clip(postwarp, 0., 1.) * 255).astype(np.uint8))
