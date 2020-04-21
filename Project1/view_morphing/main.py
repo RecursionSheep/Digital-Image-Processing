@@ -14,20 +14,20 @@ def rotation_matrix(u, theta):
 
 def prewarp(F):
 	eigvalue0, eigvector0 = np.linalg.eig(F)
-	eigvalue1, eigvector1 = np.linalg.eig(np.transpose(F))
-	e0 = eigvector0[:, np.argmin(eigvalue0)]
-	e1 = eigvector1[:, np.argmin(eigvalue1)]
-	d0 = np.array([-e0[1], e0[0], 0])
+	eigvalue1, eigvector1 = np.linalg.eig(F.T)
+	epipole0 = eigvector0[:, np.argmin(eigvalue0)]
+	epipole1 = eigvector1[:, np.argmin(eigvalue1)]
+	d0 = np.array([- epipole0[1], epipole0[0], 0])
 
 	Fd0 = F.dot(d0)
-	d1 = np.array([-Fd0[1], Fd0[0], 0])
-	theta0 = np.arctan(e0[2] / (d0[1] * e0[0] - d0[0] * e0[1]))
-	theta1 = np.arctan(e1[2] / (d1[1] * e1[0] - d1[0] * e1[1]))
+	d1 = np.array([- Fd0[1], Fd0[0], 0])
+	theta0 = np.arctan(epipole0[2] / (d0[1] * epipole0[0] - d0[0] * epipole0[1]))
+	theta1 = np.arctan(epipole1[2] / (d1[1] * epipole1[0] - d1[0] * epipole1[1]))
 	R_d0_theta0 = rotation_matrix(d0, theta0)
 	R_d1_theta1 = rotation_matrix(d1, theta1)
 
-	new_e0 = R_d0_theta0.dot(e0)
-	new_e1 = R_d1_theta1.dot(e1)
+	new_e0 = R_d0_theta0.dot(epipole0)
+	new_e1 = R_d1_theta1.dot(epipole1)
 	phi0 = - np.arctan(new_e0[1] / new_e0[0])
 	phi1 = - np.arctan(new_e1[1] / new_e1[0])
 	R_phi0 = np.array([[np.cos(phi0), - np.sin(phi0), 0],
@@ -41,7 +41,7 @@ def prewarp(F):
 	
 	return H0, H1
 
-src = "source_1.png"
+'''src = "source_1.png"
 target = "target_1.png"
 src_points = np.array([[ 63, 187],
  [ 65, 210],
@@ -180,7 +180,146 @@ target_points = np.array(
  [250, 259],
  [241, 255],
  [233, 255],
- [224, 253]])
+ [224, 253]])'''
+src = "mona.png"
+target = "mona_mirror.png"
+src_points = np.array([[ 22,  92],
+ [ 21, 103],
+ [ 23, 115],
+ [ 25, 127],
+ [ 29, 138],
+ [ 35, 148],
+ [ 42, 155],
+ [ 49, 163],
+ [ 59, 165],
+ [ 71, 165],
+ [ 84, 161],
+ [ 97, 154],
+ [107, 144],
+ [115, 131],
+ [119, 117],
+ [120, 102],
+ [121,  87],
+ [ 23,  81],
+ [ 27,  77],
+ [ 34,  76],
+ [ 41,  77],
+ [ 48,  81],
+ [ 61,  79],
+ [ 70,  74],
+ [ 81,  74],
+ [ 92,  76],
+ [103,  80],
+ [ 54,  90],
+ [ 53, 100],
+ [ 52, 110],
+ [ 51, 120],
+ [ 46, 123],
+ [ 49, 126],
+ [ 54, 128],
+ [ 59, 126],
+ [ 64, 124],
+ [ 30,  89],
+ [ 35,  87],
+ [ 41,  87],
+ [ 46,  91],
+ [ 40,  92],
+ [ 34,  92],
+ [ 70,  91],
+ [ 76,  87],
+ [ 83,  86],
+ [ 89,  88],
+ [ 84,  92],
+ [ 77,  92],
+ [ 42, 136],
+ [ 46, 135],
+ [ 50, 134],
+ [ 54, 136],
+ [ 58, 135],
+ [ 65, 136],
+ [ 74, 136],
+ [ 65, 142],
+ [ 59, 144],
+ [ 54, 144],
+ [ 51, 143],
+ [ 47, 140],
+ [ 44, 137],
+ [ 50, 138],
+ [ 54, 139],
+ [ 58, 138],
+ [ 71, 137],
+ [ 58, 138],
+ [ 54, 138],
+ [ 50, 138]])
+target_points = np.array(
+[[ 36,  85],
+ [ 37, 101],
+ [ 39, 116],
+ [ 42, 132],
+ [ 50, 145],
+ [ 61, 155],
+ [ 75, 162],
+ [ 89, 165],
+ [101, 165],
+ [110, 162],
+ [118, 154],
+ [125, 146],
+ [130, 136],
+ [134, 125],
+ [136, 114],
+ [137, 102],
+ [137,  90],
+ [ 56,  78],
+ [ 66,  74],
+ [ 78,  73],
+ [ 89,  74],
+ [ 98,  80],
+ [111,  80],
+ [118,  76],
+ [125,  75],
+ [132,  76],
+ [136,  79],
+ [105,  90],
+ [106, 100],
+ [107, 110],
+ [108, 120],
+ [ 95, 124],
+ [100, 126],
+ [105, 128],
+ [109, 126],
+ [113, 123],
+ [ 69,  88],
+ [ 76,  86],
+ [ 83,  87],
+ [ 89,  91],
+ [ 82,  91],
+ [ 75,  91],
+ [112,  91],
+ [117,  87],
+ [123,  87],
+ [128,  88],
+ [123,  91],
+ [118,  91],
+ [ 85, 136],
+ [ 94, 135],
+ [101, 134],
+ [105, 136],
+ [109, 134],
+ [113, 135],
+ [117, 136],
+ [113, 140],
+ [109, 143],
+ [105, 144],
+ [100, 143],
+ [ 93, 141],
+ [ 88, 137],
+ [101, 138],
+ [105, 138],
+ [109, 138],
+ [115, 136],
+ [110, 138],
+ [105, 139],
+ [101, 138]])
 point_num = len(src_points)
 assert len(src_points) == len(target_points)
 
@@ -197,11 +336,9 @@ H0, H1 = prewarp(F)
 #print(H0)
 #print(H1)
 
-new_size = int(np.sqrt(np.power(src.shape[0], 2) + np.power(target.shape[1], 2)))
-prewarp_1 = cv2.warpPerspective(src, H0, (m, n), borderMode = cv2.BORDER_REPLICATE)
-prewarp_2 = cv2.warpPerspective(target, H1, (m, n), borderMode = cv2.BORDER_REPLICATE)
-cv2.imwrite('prewarp1.png', (np.clip(prewarp_1, 0., 1.) * 255).astype(np.uint8))
-cv2.imwrite('prewarp2.png', (np.clip(prewarp_2, 0., 1.) * 255).astype(np.uint8))
+new_size = int(np.sqrt(np.power(src.shape[0], 2) + np.power(target.shape[1], 2))) * 4
+prewarp_1 = cv2.warpPerspective(src, H0, (new_size, new_size), borderMode = cv2.BORDER_REPLICATE)
+prewarp_2 = cv2.warpPerspective(target, H1, (new_size, new_size), borderMode = cv2.BORDER_REPLICATE)
 
 src_features = []
 target_features = []
@@ -209,10 +346,23 @@ for i in range(point_num):
 	point = np.array([src_points[i, 0], src_points[i, 1], 1])
 	point = np.matmul(H0, point)
 	src_features.append([point[1] / point[2], point[0] / point[2]])
+	'''x = int(point[1] / point[2]); y = int(point[0] / point[2]);
+	for dx in range(-1, 2):
+		for dy in range(-1, 2):
+			prewarp_1[x + dx, y + dy, 0] = 1; prewarp_1[x + dx, y + dy, 1] = 0; prewarp_1[x + dx, y + dy, 2] = 0;'''
 	point = np.array([target_points[i, 0], target_points[i, 1], 1])
 	point = np.matmul(H1, point)
 	target_features.append([point[1] / point[2], point[0] / point[2]])
+	'''x = int(point[1] / point[2]); y = int(point[0] / point[2]);
+	for dx in range(-1, 2):
+		for dy in range(-1, 2):
+			prewarp_2[x + dx, y + dy, 0] = 1; prewarp_2[x + dx, y + dy, 1] = 0; prewarp_2[x + dx, y + dy, 2] = 0;'''
+
+cv2.imwrite('prewarp1.png', (np.clip(prewarp_1, 0., 1.) * 255).astype(np.uint8))
+cv2.imwrite('prewarp2.png', (np.clip(prewarp_2, 0., 1.) * 255).astype(np.uint8))
+
 morph_rates = [0, .1, .2, .3, .4, .5, .6, .7, .8, .9, 1.]
+morph_rates = [.5]
 output = image_morph(prewarp_1, prewarp_2, src_features, target_features, morph_rates)
 
 point0 = np.array([0, 0, 1])

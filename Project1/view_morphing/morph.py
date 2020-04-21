@@ -40,6 +40,10 @@ def image_morph(src, target, src_feature, target_feature, morph_rates):
 			end_y = x[0] * target_feature[tri[0], 1] + x[1] * target_feature[tri[1], 1] + x[2] * target_feature[tri[2], 1]
 			end_x = int(end_x)
 			end_y = int(end_y)
+			if (end_x >= n):
+				end_x = n - 1
+			if (end_y >= m):
+				end_y = m - 1
 			color1 = src[i, j, :]
 			color2 = target[end_x, end_y, :]
 			for k in range(morph_num):
