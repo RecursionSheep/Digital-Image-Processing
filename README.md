@@ -6,3 +6,4 @@ Projects for Digital Image Processing, 2020 Spring.
 	- Image Morphing
 	- View Morphing
 - Project 2
+	- Non-I.I.D. Image Classification
