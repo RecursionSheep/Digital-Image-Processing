@@ -1,6 +1,26 @@
 import numpy as np
 import torch
 
+def forward(x_in, one_hot, w, beta):
+	W = w * w
+	pred = torch.softmax(torch.matmul(x_in, beta), dim = 1)
+	loss = - (W * (one_hot * torch.log(pred)).sum(1)).sum(0)
+	lambda1 = 1e-2
+	lambda2 = 1e-3
+	lambda3 = 1e-3
+	lambda4 = 1e-3
+	lambda5 = 1e-1
+	for treatment in range(2048):
+		x_minus = x_in.clone()
+		x_minus[:, treatment] = 0.
+		bal1 = torch.matmul(x_minus.T, W * x_in[:, treatment]) / torch.matmul(W.T, x_in[:, treatment])
+		bal2 = torch.matmul(x_minus.T, W * (1 - x_in[:, treatment])) / torch.matmul(W.T, (1 - x_in[:, treatment]))
+		loss = loss + lambda1 * (torch.norm(bal1 - bal2) ** 2)
+
+	loss = loss + lambda2 * (torch.norm(W) ** 2) + lambda3 * (torch.norm(beta) ** 2) + lambda4 * torch.norm(W, p = 1)
+	loss = loss + lambda5 * ((torch.sum(W) - 1) ** 2)
+	return loss
+
 course_train = np.load("course_train.npy")
 train = course_train[:, 0 : 512]
 train_context = course_train[:, 512]
@@ -46,28 +66,11 @@ y_in = y_in.reshape([train_cnt, -1])
 one_hot = torch.zeros(train_cnt, 10).scatter_(1, y_in, 1)
 beta = torch.randn(2048, 10, requires_grad = True)
 w = torch.randn(train_cnt, requires_grad = True)
-W = w * w
-pred = torch.softmax(torch.matmul(x_in, beta), dim = 1)
-loss = - (W * (one_hot * torch.log(pred)).sum(1)).sum(0)
 
-lambda1 = 1e-2
-lambda2 = 1e-3
-lambda3 = 1e-3
-lambda4 = 1e-3
-lambda5 = 1e-1
 lr = 0.01
 
-for treatment in range(2048):
-	x_minus = x_in.clone()
-	x_minus[:, treatment] = 0.
-	bal1 = torch.matmul(x_minus.T, W * x_in[:, treatment]) / torch.matmul(W.T, x_in[:, treatment])
-	bal2 = torch.matmul(x_minus.T, W * (1 - x_in[:, treatment])) / torch.matmul(W.T, (1 - x_in[:, treatment]))
-	loss = loss + lambda1 * (torch.norm(bal1 - bal2) ** 2)
-
-loss = loss + lambda2 * (torch.norm(W) ** 2) + lambda3 * (torch.norm(beta) ** 2) + lambda4 * torch.norm(W, p = 1)
-loss = loss + lambda5 * ((torch.sum(W) - 1) ** 2)
-
 for it in range(100):
+	loss = forward(x_in, one_hot, w, beta)
 	print(loss)
 	loss.backward()
 	w.data = w.data - w.grad.data * lr
