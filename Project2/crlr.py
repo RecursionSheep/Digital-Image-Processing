@@ -3,6 +3,7 @@ import torch
 
 def forward(x_in, one_hot, w, beta):
 	W = w * w
+	print(W)
 	pred = torch.softmax(torch.matmul(x_in, beta), dim = 1)
 	loss = - (W * (one_hot * torch.log(pred)).sum(1)).sum(0)
 	lambda1 = 1e-2
@@ -79,10 +80,10 @@ for it in range(100):
 	beta.grad.data.zero_()
 
 x_val = torch.tensor(test, dtype = torch.float)
-pred = torch.max(torch.softmax(torch.matmul(x_val, beta), dim = 1), dim = 1)
+pred = torch.argmax(torch.softmax(torch.matmul(x_val, beta), dim = 1), dim = 1)
 cnt = 0
 for i in range(test_cnt):
-	if pred[i] == test_label[i]:
+	if pred.data[i] == test_label[i]:
 		cnt += 1
 print(cnt / test_cnt)
 
