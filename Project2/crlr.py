@@ -70,8 +70,8 @@ loss = loss + lambda5 * ((torch.sum(W) - 1) ** 2)
 for it in range(100):
 	print(loss)
 	loss.backward()
-	w.sub_(w.grad.data * lr)
-	beta.sub_(beta.grad.data * lr)
+	w.data = w.data - w.grad.data * lr
+	beta.data = beta.data - beta.grad.data * lr
 	w.grad.data.zero_()
 	beta.grad.data.zero_()
 
