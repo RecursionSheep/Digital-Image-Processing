@@ -1,9 +1,10 @@
 import numpy as np
-import torch
+from sklearn.linear_model import LogisticRegression
+#import torch
 
 def forward(x_in, one_hot, w, beta):
 	W = w * w
-	pred = torch.clamp(torch.softmax(torch.matmul(x_in, beta), dim = 1), 1e-10, 1)
+	pred = torch.clamp(torch.softmax(torch.matmul(x_in, beta), dim = 1), 1e-5, 1)
 	loss = - ((one_hot * torch.log(pred)).sum(1)).mean(0)
 	'''lambda1 = 1e-2
 	lambda2 = 1e-3
@@ -42,8 +43,8 @@ test_context = train_context.copy()
 test_label = train_label.copy()
 test_cnt = 0
 for i in range(size):
-	if (train_context[i] >= 7):
-	#if (i % 10 >= 7):
+	#if (train_context[i] >= 7):
+	if (i % 10 >= 7):
 		test[test_cnt, :] = train[i, :]
 		test_context[test_cnt] = train_context[i]
 		test_label[test_cnt] = train_label[i]
@@ -60,6 +61,17 @@ train_label = train_label[0 : train_cnt]
 test_context = test_context[0 : test_cnt]
 test_label = test_label[0 : test_cnt]
 
+lr = LogisticRegression(C = 100)
+lr.fit(train, train_label)
+results = lr.predict(test)
+acc = 0
+for i in range(test_cnt):
+	if results[i] == test_label[i]:
+		acc += 1
+acc = acc / test_cnt
+print(acc)
+exit()
+
 x_in = torch.tensor(train, dtype = torch.float)
 y_in = torch.tensor(train_label, dtype = torch.long)
 y_in = y_in.reshape([train_cnt, -1])
@@ -74,7 +86,7 @@ for it in range(10000):
 	print(loss.data)
 	loss.backward()
 	#w.data = w.data - w.grad.data * lr
-	beta.data = beta.data - beta.grad.data * (lr / it)
+	beta.data = beta.data - beta.grad.data * (lr / (it + 1))
 	#w.grad.data.zero_()
 	beta.grad.data.zero_()
 
