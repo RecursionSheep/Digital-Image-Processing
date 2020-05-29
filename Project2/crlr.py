@@ -1,6 +1,7 @@
 import numpy as np
 from sklearn.linear_model import LogisticRegression
 #import torch
+from dataset import split_random, split_by_context
 
 def forward(x_in, one_hot, w, beta):
 	W = w * w
@@ -23,43 +24,36 @@ def forward(x_in, one_hot, w, beta):
 	return loss
 
 course_train = np.load("course_train.npy")
-train = course_train[:, 0 : 512]
-train_context = course_train[:, 512]
-train_label = course_train[:, 513]
-size = train.shape[0]
-train = train / np.max(train, axis = 0, keepdims = True)
+#train_data, test_data = split_random(course_train, None)
+train_data, test_data = split_by_context(course_train, {"split_ratio": (5, 2)})
+train = train_data[:, 0 : 512]
+train_context = train_data[:, 512]
+train_label = train_data[:, 513]
+train_cnt = train.shape[0]
+test = test_data[:, 0 : 512]
+test_context = test_data[:, 512]
+test_label = test_data[:, 513]
+test_cnt = test.shape[0]
 
-binary = np.zeros((size, 512 * 4))
-for i in range(size):
+bins = 12
+
+feature_max = np.maximum(np.max(train, axis = 0), np.max(test, axis = 0))
+binary = np.zeros((train_cnt, 512 * bins))
+for i in range(train_cnt):
 	for j in range(512):
-		for k in range(1, 5):
-			if train[i, j] <= (k / 4):
-				binary[i, j * 4 + k - 1] = 1.
+		for k in range(1, bins + 1):
+			if train[i, j] <= (feature_max[j] * k / bins):
+				binary[i, j * bins + k - 1] = 1.
 				break
 train = binary
-
-test = train.copy()
-test_context = train_context.copy()
-test_label = train_label.copy()
-test_cnt = 0
-for i in range(size):
-	#if (train_context[i] >= 7):
-	if (i % 10 >= 7):
-		test[test_cnt, :] = train[i, :]
-		test_context[test_cnt] = train_context[i]
-		test_label[test_cnt] = train_label[i]
-		test_cnt += 1
-	else:
-		train[i - test_cnt, :] = train[i, :]
-		train_context[i - test_cnt] = train_context[i]
-		train_label[i - test_cnt] = train_label[i]
-train_cnt = size - test_cnt
-train = train[0 : train_cnt, :]
-test = test[0 : test_cnt, :]
-train_context = train_context[0 : train_cnt]
-train_label = train_label[0 : train_cnt]
-test_context = test_context[0 : test_cnt]
-test_label = test_label[0 : test_cnt]
+binary = np.zeros((test_cnt, 512 * bins))
+for i in range(test_cnt):
+	for j in range(512):
+		for k in range(1, bins + 1):
+			if test[i, j] <= (feature_max[j] * k / bins):
+				binary[i, j * bins + k - 1] = 1.
+				break
+test = binary
 
 lr = LogisticRegression(C = 100)
 lr.fit(train, train_label)
