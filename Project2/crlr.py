@@ -3,7 +3,7 @@ from sklearn.linear_model import LogisticRegression
 import torch
 from dataset import split_random, split_by_context
 
-def forward(x_in, one_hot, w, beta):
+def forward(x_in, one_hot, w, beta, x_minus):
 	W = w * w
 	pred = torch.clamp(torch.softmax(torch.matmul(x_in, beta), dim = 1), 1e-5, 1)
 	#print(torch.matmul(x_in, beta).data)
@@ -67,14 +67,14 @@ w.data /= 10
 x_minus = []
 for i in range(512 * bins):
 	xx = x_in.clone()
-	xx[:, treatment] = 0.
+	xx[:, i] = 0.
 	x_minus.append(xx)
 
 lr = 0.5
 last = 1e9
 
 for it in range(10000):
-	loss = forward(x_in, one_hot, w, beta)
+	loss = forward(x_in, one_hot, w, beta, x_minus)
 	print(loss.data)
 	if (last - loss.data < 1e-3):
 		lr *= .999
