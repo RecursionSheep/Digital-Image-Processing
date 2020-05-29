@@ -7,15 +7,15 @@ def forward(x_in, one_hot, w, beta, x_minus):
 	W = w * w
 	pred = torch.clamp(torch.softmax(torch.matmul(x_in, beta), dim = 1), 1e-5, 1)
 	#print(torch.matmul(x_in, beta).data)
-	loss = - ((one_hot * torch.log(pred)).sum(1)).mean(0)
+	loss = - (W * ((one_hot * torch.log(pred)).sum(1))).sum(0)
 	lambda1 = 1e-6
 	lambda2 = 1e-5
 	lambda3 = 1e-5
 	lambda4 = 1e-5
 	lambda5 = 1e-3
 	for treatment in range(512 * bins):
-		bal1 = torch.matmul(x_minus[treatment].T, W * x_in[:, treatment]) / torch.matmul(W.T, x_in[:, treatment])
-		bal2 = torch.matmul(x_minus[treatment].T, W * (1 - x_in[:, treatment])) / torch.matmul(W.T, (1 - x_in[:, treatment]))
+		bal1 = torch.matmul(x_minus[treatment].T, W * x_in[:, treatment]) / (torch.matmul(W.T, x_in[:, treatment]) + 1e-4)
+		bal2 = torch.matmul(x_minus[treatment].T, W * (1 - x_in[:, treatment])) / (torch.matmul(W.T, (1 - x_in[:, treatment])) + 1e-4)
 		loss = loss + lambda1 * (torch.norm(bal1 - bal2) ** 2)
 
 	loss = loss + lambda2 * (torch.norm(W) ** 2) + lambda3 * (torch.norm(beta) ** 2) + lambda4 * torch.norm(W, p = 1)
