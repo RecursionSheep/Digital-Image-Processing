@@ -6,6 +6,7 @@ from dataset import split_random, split_by_context
 def forward(x_in, one_hot, w, beta):
 	W = w * w
 	pred = torch.clamp(torch.softmax(torch.matmul(x_in, beta), dim = 1), 1e-5, 1)
+	print(torch.matmul(x_in, beta).data)
 	loss = - ((one_hot * torch.log(pred)).sum(1)).mean(0)
 	'''lambda1 = 1e-2
 	lambda2 = 1e-3
@@ -38,7 +39,7 @@ test_cnt = test.shape[0]
 bins = 12
 
 feature_max = np.maximum(np.max(train, axis = 0), np.max(test, axis = 0))
-print(feature_max)
+#print(feature_max)
 binary = np.zeros((train_cnt, 512 * bins))
 for i in range(train_cnt):
 	for j in range(512):
@@ -63,14 +64,14 @@ one_hot = torch.zeros(train_cnt, 10).scatter_(1, y_in, 1)
 beta = torch.randn(512 * bins, 10, requires_grad = True)
 w = torch.randn(train_cnt, requires_grad = True)
 
-lr = 2.
+lr = 10.
 last = 1e9
 
 for it in range(10000):
 	loss = forward(x_in, one_hot, w, beta)
 	print(loss.data)
-	if (last - loss.data < 1e-4):
-		lr *= .5
+	if (last - loss.data < 1e-3):
+		lr *= .999
 	last = loss.data
 	loss.backward()
 	#w.data = w.data - w.grad.data * lr
