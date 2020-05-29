@@ -6,22 +6,20 @@ from dataset import split_random, split_by_context
 def forward(x_in, one_hot, w, beta):
 	W = w * w
 	pred = torch.clamp(torch.softmax(torch.matmul(x_in, beta), dim = 1), 1e-5, 1)
-	print(torch.matmul(x_in, beta).data)
+	#print(torch.matmul(x_in, beta).data)
 	loss = - ((one_hot * torch.log(pred)).sum(1)).mean(0)
-	'''lambda1 = 1e-2
-	lambda2 = 1e-3
-	lambda3 = 1e-3
-	lambda4 = 1e-3
-	lambda5 = 1e-1
-	for treatment in range(2048):
-		x_minus = x_in.clone()
-		x_minus[:, treatment] = 0.
-		bal1 = torch.matmul(x_minus.T, W * x_in[:, treatment]) / torch.matmul(W.T, x_in[:, treatment])
-		bal2 = torch.matmul(x_minus.T, W * (1 - x_in[:, treatment])) / torch.matmul(W.T, (1 - x_in[:, treatment]))
+	lambda1 = 1e-6
+	lambda2 = 1e-5
+	lambda3 = 1e-5
+	lambda4 = 1e-5
+	lambda5 = 1e-3
+	for treatment in range(512 * bins):
+		bal1 = torch.matmul(x_minus[treatment].T, W * x_in[:, treatment]) / torch.matmul(W.T, x_in[:, treatment])
+		bal2 = torch.matmul(x_minus[treatment].T, W * (1 - x_in[:, treatment])) / torch.matmul(W.T, (1 - x_in[:, treatment]))
 		loss = loss + lambda1 * (torch.norm(bal1 - bal2) ** 2)
 
 	loss = loss + lambda2 * (torch.norm(W) ** 2) + lambda3 * (torch.norm(beta) ** 2) + lambda4 * torch.norm(W, p = 1)
-	loss = loss + lambda5 * ((torch.sum(W) - 1) ** 2)'''
+	loss = loss + lambda5 * ((torch.sum(W) - 1) ** 2)
 	return loss
 
 course_train = np.load("course_train.npy")
@@ -66,7 +64,13 @@ beta.data /= 10
 w = torch.randn(train_cnt, requires_grad = True)
 w.data /= 10
 
-lr = 10.
+x_minus = []
+for i in range(512 * bins):
+	xx = x_in.clone()
+	xx[:, treatment] = 0.
+	x_minus.append(xx)
+
+lr = 0.5
 last = 1e9
 
 for it in range(10000):
