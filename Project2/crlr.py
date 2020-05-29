@@ -63,13 +63,16 @@ one_hot = torch.zeros(train_cnt, 10).scatter_(1, y_in, 1)
 beta = torch.randn(512 * bins, 10, requires_grad = True)
 w = torch.randn(train_cnt, requires_grad = True)
 
-lr = 1.
+lr = 2.
+last = 1e9
 
 for it in range(10000):
 	loss = forward(x_in, one_hot, w, beta)
 	print(loss.data)
+	if (last - loss.data < 1e-4):
+		lr *= .5
+	last = loss.data
 	loss.backward()
-	lr *= 0.9999
 	#w.data = w.data - w.grad.data * lr
 	beta.data = beta.data - beta.grad.data * lr
 	#w.grad.data.zero_()
