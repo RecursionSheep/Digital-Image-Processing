@@ -62,7 +62,9 @@ y_in = torch.tensor(train_label, dtype = torch.long)
 y_in = y_in.reshape([train_cnt, -1])
 one_hot = torch.zeros(train_cnt, 10).scatter_(1, y_in, 1)
 beta = torch.randn(512 * bins, 10, requires_grad = True)
+beta.data /= 10
 w = torch.randn(train_cnt, requires_grad = True)
+w.data /= 10
 
 lr = 10.
 last = 1e9
