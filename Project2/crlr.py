@@ -1,6 +1,6 @@
 import numpy as np
 from sklearn.linear_model import LogisticRegression
-#import torch
+import torch
 from dataset import split_random, split_by_context
 
 def forward(x_in, one_hot, w, beta):
@@ -38,6 +38,7 @@ test_cnt = test.shape[0]
 bins = 12
 
 feature_max = np.maximum(np.max(train, axis = 0), np.max(test, axis = 0))
+print(feature_max)
 binary = np.zeros((train_cnt, 512 * bins))
 for i in range(train_cnt):
 	for j in range(512):
@@ -55,22 +56,11 @@ for i in range(test_cnt):
 				break
 test = binary
 
-lr = LogisticRegression(C = 100)
-lr.fit(train, train_label)
-results = lr.predict(test)
-acc = 0
-for i in range(test_cnt):
-	if results[i] == test_label[i]:
-		acc += 1
-acc = acc / test_cnt
-print(acc)
-exit()
-
 x_in = torch.tensor(train, dtype = torch.float)
 y_in = torch.tensor(train_label, dtype = torch.long)
 y_in = y_in.reshape([train_cnt, -1])
 one_hot = torch.zeros(train_cnt, 10).scatter_(1, y_in, 1)
-beta = torch.randn(2048, 10, requires_grad = True)
+beta = torch.randn(512 * bins, 10, requires_grad = True)
 w = torch.randn(train_cnt, requires_grad = True)
 
 lr = 1.
@@ -79,8 +69,9 @@ for it in range(10000):
 	loss = forward(x_in, one_hot, w, beta)
 	print(loss.data)
 	loss.backward()
+	lr *= 0.9999
 	#w.data = w.data - w.grad.data * lr
-	beta.data = beta.data - beta.grad.data * (lr / (it + 1))
+	beta.data = beta.data - beta.grad.data * lr
 	#w.grad.data.zero_()
 	beta.grad.data.zero_()
 
